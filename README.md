@@ -27,7 +27,12 @@ The optional `.claude/skills` compatibility provider registers on `ctx.skills` a
 
 ## Install
 
-**The plugin never needs to be built by the consumer** — the repository ships the prebuilt host entry and browser bundle in `lib/` (committed).
+**The plugin never needs to be built by the consumer** — the repository ships the prebuilt host entry and browser bundle in `lib/` (committed). Two routes:
+
+- **Web / self-hosted harness** (source or dev build, e.g. running `pnpm dev` from a harness checkout) — see below.
+- **DeepSeek Harness Desktop** (the Tauri app) — one-shot script, next section.
+
+### Web / self-hosted harness
 
 ```sh
 # From a local clone (recommended for iterating) — installs as a link
@@ -39,6 +44,41 @@ pnpm dsh plugin add --profile web github:my-dsh-plugin/dsh-skill-manager
 ```
 
 (`dsh` CLI from your harness checkout; set `DSH_HOME` to your harness home if it is not the default `~/.dsh`.)
+
+> **Whitelist:** on source/dev builds, also add `'skill-manager'` to `WEB_SETTINGS_NAMESPACES`
+> in `packages/host/apiproxy/src/api-proxy.ts` (see Requirements) or the Skills page
+> renders read-only.
+
+### DeepSeek Harness Desktop — one-shot install
+
+**Desktop users don't need to build anything.** Run this once in a **normal terminal**
+(not inside the app's own harness shell — the app bundle and app-data directory are
+sandboxed/read-only from there, especially on macOS):
+
+```sh
+bash <(curl -Ls https://raw.githubusercontent.com/my-dsh-plugin/dsh-skill-manager/main/scripts/install-desktop.sh) --restart
+```
+
+The script is idempotent and does everything automatically:
+
+1. **Pulls the plugin from GitHub** (the repo ships the prebuilt `lib/`, nothing to build)
+   and installs its runtime dependencies (`tar`, `yaml`, `https-proxy-agent`,
+   `@deepseek-ai/schemastery`) via npm
+2. **Patches the whitelist** — appends `"skill-manager"` to `WEB_SETTINGS_NAMESPACES` in
+   the embedded harness's `@deepseek-ai/dsh-host-apiproxy/lib/index.js`, so the Skills
+   settings card is **read/write** (without it, the page renders read-only)
+3. **Installs the plugin** into the desktop web profile (`profiles/web/node_modules/`)
+   and registers it in the profile's `dsh.profile.bundles`
+4. **Restarts the desktop app** (`--restart`), after which **Settings → Skills** appears
+
+Requirements: the machine must be able to reach GitHub (respects `GITHUB_MIRROR` /
+proxy env), and the terminal must have write access to the app install dir + app-data
+dir. Overrides: `DSH_DESKTOP_APP`, `DSH_DESKTOP_HOME`, `DSH_SKILL_SOURCE_DIR` (use a local
+clone instead of GitHub).
+
+> **For everyone else (end users of a released desktop build):** no manual steps at all —
+> upgrade to a build that ships the patched harness and the seeded plugin, then restart.
+> The Skills page is then available out of the box.
 
 The manual equivalent is editing the profile's `package.json`:
 

@@ -27,7 +27,12 @@ Harness 原生拥有技能加载能力:`dsh-skill-filesystem` 监视技能根目
 
 ## 安装
 
-**消费者无需构建插件** —— 仓库随附预构建的 Host 入口与浏览器 bundle(`lib/`,已提交)。
+**消费者无需构建插件** —— 仓库随附预构建的 Host 入口与浏览器 bundle(`lib/`,已提交)。两条路线:
+
+- **Web / 自托管 Harness**(源码或开发构建,例如从 harness checkout 跑 `pnpm dev`)—— 见下。
+- **DeepSeek Harness Desktop(Tauri 桌面端)** —— 一键脚本,见下一节。
+
+### Web / 自托管 Harness
 
 ```sh
 # 本地克隆(推荐迭代) —— 以 link 方式安装
@@ -39,6 +44,28 @@ pnpm dsh plugin add --profile web github:my-dsh-plugin/dsh-skill-manager
 ```
 
 (`dsh` CLI 使用你的 Harness checkout 中的;若 `DSH_HOME` 非默认 `~/.dsh` 请自行设置。)
+
+> **白名单:** 源码/开发构建上,还需在 `packages/host/apiproxy/src/api-proxy.ts` 的
+> `WEB_SETTINGS_NAMESPACES` 中加入 `'skill-manager'`(见"环境要求"),否则 Skills 页只读。
+
+### DeepSeek Harness Desktop(桌面端)一键安装
+
+**桌面端用户无需构建任何东西。** 在**普通终端**(不要在 App 自带的 harness 会话里跑——那里的应用安装目录和 App 数据目录是沙箱/只读的,macOS 尤其如此)执行一次:
+
+```sh
+bash <(curl -Ls https://raw.githubusercontent.com/my-dsh-plugin/dsh-skill-manager/main/scripts/install-desktop.sh) --restart
+```
+
+脚本幂等,全自动完成:
+
+1. **从 GitHub 拉取插件**(仓库随附预编译 `lib/`,无需构建),并用 npm 安装运行时依赖(`tar`、`yaml`、`https-proxy-agent`、`@deepseek-ai/schemastery`)
+2. **打白名单补丁** —— 在内嵌 harness 的 `@deepseek-ai/dsh-host-apiproxy/lib/index.js` 的 `WEB_SETTINGS_NAMESPACES` 追加 `"skill-manager"`,使 Skills 设置页**可读写**(否则该页只读)
+3. **装入桌面 profile**(`profiles/web/node_modules/`)并在 `dsh.profile.bundles` 注册
+4. **重启桌面 App**(`--restart`),之后 **设置 → Skills** 出现
+
+前提:机器可访问 GitHub(支持 `GITHUB_MIRROR` / 代理环境变量),且当前终端对应用安装目录与 App 数据目录有写权限。可用环境变量覆盖:`DSH_DESKTOP_APP`、`DSH_DESKTOP_HOME`、`DSH_SKILL_SOURCE_DIR`(改用本地克隆)。
+
+> **其他最终用户(使用已发布桌面包):** 完全无需手动操作 —— 升级到包含打过补丁的 harness 和已 seed 插件的版本,重启即可,Skills 页开箱即用。
 
 手动等价做法是编辑 profile 的 `package.json`:
 
