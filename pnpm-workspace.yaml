@@ -6,6 +6,11 @@ autoInstallPeers: false
 allowBuilds:
   esbuild: true
 
+# Pin es-module-lexer to 2.3.1: 2.3.2 (2026-08-17) breaches the desktop pack
+# supply-chain minimumReleaseAge policy at CI time. 2.3.1 (2026-07-12) passes.
+overrides:
+  es-module-lexer: 2.3.1
+
 # The packageManager field pins pnpm 11.x for the template convention, but a
 # machine with another pnpm 10+ may install without self-bootstrapping a
 # second pnpm binary.
