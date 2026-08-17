@@ -1,0 +1,13 @@
+packages:
+  - .
+
+autoInstallPeers: false
+
+allowBuilds:
+  esbuild: true
+
+# The packageManager field pins pnpm 11.x for the template convention, but a
+# machine with another pnpm 10+ may install without self-bootstrapping a
+# second pnpm binary.
+managePackageManagerVersions: false
+packageManagerStrict: false

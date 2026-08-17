@@ -1,0 +1,8 @@
+# dsh-skill-manager's dsh profile bundle patch (declared by the
+# `dsh.bundle.patch` manifest field): applied over the earlier layers when
+# this package appears in a profile's `dsh.profile.bundles` list. It inserts
+# the plugin; optional config (proxy, compatClaude) is writable from the
+# plugin's own Settings section, so nothing is tunable here.
+- insert:
+    - id: skill-manager
+      name: dsh-skill-manager
